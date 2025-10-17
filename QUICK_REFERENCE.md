@@ -126,9 +126,23 @@ pipeline.shutdown();
 FileProcessingPipeline pipeline = new FileProcessingPipeline(4);
 // ... register processors ...
 
+// Simple listener using factory method (only supports onCompleted)
 pipeline.registerListener(ProcessingProgressListener.create(context -> 
     System.out.println("Completed: " + context.getSourceFile().getName())
 ));
+
+// OR use full implementation for all callbacks
+pipeline.registerListener(new ProcessingProgressListener() {
+    @Override
+    public void onProcessingStarted(ProcessingContext context) {
+        System.out.println("Started: " + context.getSourceFile().getName());
+    }
+    
+    @Override
+    public void onProcessingCompleted(ProcessingContext context) {
+        System.out.println("Completed: " + context.getSourceFile().getName());
+    }
+});
 
 List<ProcessingResult> results = pipeline.processFiles(files, keywords);
 pipeline.shutdown();
@@ -140,8 +154,8 @@ pipeline.registerListener(new ProcessingProgressListener() {
     @Override
     public void onProcessingFailed(ProcessingContext context, Throwable error) {
         System.err.println("Failed: " + context.getSourceFile().getName());
-        for (ProcessingContext.ProcessingError err : context.getErrors()) {
-            System.err.println("  Error: " + err);
+        for (ProcessingContext.ProcessingError processingError : context.getErrors()) {
+            System.err.println("  Error: " + processingError);
         }
     }
 });
@@ -202,7 +216,8 @@ Available in `ProcessingErrorHandler`:
 | Excel | .xlsx, .xls | SpreadsheetProcessor |
 | PDF | .pdf | PDFProcessor |
 | Word | .docx, .doc | WordProcessor |
-| ZIP | .zip | (Handled by FileProcessingService) |
+
+**Note**: ZIP file handling is done at a higher level (FileProcessingService extracts and processes contents)
 
 ## Performance Tips
 
