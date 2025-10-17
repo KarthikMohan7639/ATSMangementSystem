@@ -1,6 +1,8 @@
 package com.ats.service;
 
 import com.ats.model.DataRow;
+import com.ats.processor.FileProcessor;
+import com.ats.processor.FileTypeDetector;
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.File;
@@ -13,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Service for processing Word document files
  */
-public class WordProcessor {
+public class WordProcessor implements FileProcessor {
     
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
@@ -22,11 +24,23 @@ public class WordProcessor {
     private static final Pattern PHONE_PATTERN = Pattern.compile(
         "\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}"
     );
+    
+    @Override
+    public boolean supports(File file) {
+        return FileTypeDetector.isWordDocument(file);
+    }
+    
+    @Override
+    public String getProcessorName() {
+        return "WordProcessor";
+    }
 
     /**
      * Process Word document and extract content containing keywords
      */
+    @Override
     public List<DataRow> processFile(File file, Set<String> keywords) throws IOException {
+        validateFile(file);
         List<DataRow> results = new ArrayList<>();
         
         try (FileInputStream fis = new FileInputStream(file);

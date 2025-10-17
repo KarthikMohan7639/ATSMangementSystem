@@ -1,6 +1,8 @@
 package com.ats.service;
 
 import com.ats.model.DataRow;
+import com.ats.processor.FileProcessor;
+import com.ats.processor.FileTypeDetector;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -13,12 +15,24 @@ import java.util.*;
 /**
  * Service for processing Excel spreadsheet files
  */
-public class SpreadsheetProcessor {
+public class SpreadsheetProcessor implements FileProcessor {
+    
+    @Override
+    public boolean supports(File file) {
+        return FileTypeDetector.isSpreadsheet(file);
+    }
+    
+    @Override
+    public String getProcessorName() {
+        return "SpreadsheetProcessor";
+    }
 
     /**
      * Process Excel file and extract rows containing keywords
      */
+    @Override
     public List<DataRow> processFile(File file, Set<String> keywords) throws IOException {
+        validateFile(file);
         List<DataRow> results = new ArrayList<>();
         
         try (FileInputStream fis = new FileInputStream(file)) {

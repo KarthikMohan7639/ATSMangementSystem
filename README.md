@@ -36,12 +36,23 @@ src/main/java/com/ats/
 │   └── ATSController.java       # GUI controller
 ├── model/
 │   └── DataRow.java            # Data model for extracted rows
-└── service/
-    ├── FileProcessingService.java    # Main file processing coordinator
-    ├── SpreadsheetProcessor.java     # Excel file processor
-    ├── PDFProcessor.java             # PDF file processor
-    ├── WordProcessor.java            # Word document processor
-    └── ExportService.java            # Export functionality
+├── processor/                   # File processing architecture
+│   ├── FileProcessor.java              # Interface for all processors
+│   ├── FileProcessorFactory.java       # Factory for processor management
+│   ├── FileProcessingPipeline.java     # Processing pipeline orchestrator
+│   ├── ProcessingContext.java          # Processing state and metadata
+│   ├── ProcessingProgressListener.java # Progress tracking interface
+│   ├── ProcessingErrorHandler.java     # Error handling and recovery
+│   ├── FileTypeDetector.java           # File type detection utility
+│   └── FileMetadataExtractor.java      # File metadata extraction
+├── service/
+│   ├── FileProcessingService.java    # Main file processing coordinator
+│   ├── SpreadsheetProcessor.java     # Excel file processor (implements FileProcessor)
+│   ├── PDFProcessor.java             # PDF file processor (implements FileProcessor)
+│   ├── WordProcessor.java            # Word document processor (implements FileProcessor)
+│   └── ExportService.java            # Export functionality
+└── examples/
+    └── FileProcessingExample.java    # Usage examples
 ```
 
 ## Requirements
@@ -185,15 +196,71 @@ mvn javafx:run
 - Verify file extensions match actual file types
 - Check that ZIP files are not password-protected
 
+## File Processing Architecture
+
+The project now includes a robust file processing architecture with the following features:
+
+### Architecture Components
+
+1. **FileProcessor Interface** - Common interface for all file processors
+2. **FileProcessingPipeline** - Orchestrates multi-stage processing with concurrent support
+3. **ProcessingContext** - Tracks processing state, errors, and metadata
+4. **FileTypeDetector** - Robust file type detection using magic numbers
+5. **FileMetadataExtractor** - Comprehensive file metadata extraction
+6. **ProcessingErrorHandler** - Configurable error handling and recovery
+7. **FileProcessorFactory** - Centralized processor management
+8. **ProcessingProgressListener** - Progress tracking and event notifications
+
+### Key Features
+
+- **Concurrent Processing** - Process multiple files in parallel
+- **Progress Tracking** - Real-time processing progress notifications
+- **Error Recovery** - Configurable error handling strategies (fail-fast, skip, retry, continue)
+- **File Validation** - Pre-processing validation and type detection
+- **Metadata Extraction** - Rich file metadata (size, type, permissions, etc.)
+- **Extensibility** - Easy to add new file processors
+- **Pipeline Architecture** - Clean separation of validation, processing, and completion stages
+
+### Usage Example
+
+```java
+// Create pipeline with concurrent processing
+FileProcessingPipeline pipeline = new FileProcessingPipeline(8);
+
+// Register processors
+FileProcessorFactory factory = FileProcessorFactory.getInstance();
+for (FileProcessor processor : factory.getAllProcessors()) {
+    pipeline.registerProcessor(processor);
+}
+
+// Add progress listener
+pipeline.registerListener(new ProcessingProgressListener() {
+    @Override
+    public void onProcessingCompleted(ProcessingContext context) {
+        System.out.println("Processed: " + context.getSourceFile().getName());
+    }
+});
+
+// Process files
+Set<String> keywords = Set.of("java", "developer");
+ProcessingResult result = pipeline.processSingleFile(file, keywords);
+```
+
+For detailed documentation, see [FILE_PROCESSING_ARCHITECTURE.md](FILE_PROCESSING_ARCHITECTURE.md)
+
+For usage examples, see `src/main/java/com/ats/examples/FileProcessingExample.java`
+
 ## Future Enhancements
 
 - Apache Spark integration for distributed processing
 - Advanced text analytics and matching algorithms
 - Database storage for processed data
-- Batch processing with progress tracking
 - Custom field mapping configuration
 - Resume parsing with skills extraction
 - Integration with HR systems and APIs
+- Retry logic for transient failures
+- Processing metrics and analytics
+- Plugin architecture for third-party processors
 
 ## Contributing
 
